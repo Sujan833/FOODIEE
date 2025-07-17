@@ -16,8 +16,10 @@ function App() {
     return stored ? JSON.parse(stored) : [];
   });
 
+  const API_BASE = process.env.REACT_APP_SERVER_URL;
+
   useEffect(() => {
-    fetch('http://localhost:5000/api/recipes')
+    fetch(`${API_BASE}/api/recipes`)
       .then((res) => res.json())
       .then(setRecipes)
       .catch(console.error);
@@ -42,7 +44,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`http://localhost:5000/api/recipes/${id}`, {
+      await fetch(`${API_BASE}/api/recipes/${id}`, {
         method: 'DELETE',
       });
       setRecipes(recipes.filter((r) => r._id !== id));
