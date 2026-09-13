@@ -50,15 +50,7 @@ if (frontendDist) {
   console.log("Warning: No static frontend dist folder found.");
 }
 
-app.get("*", (req, res, next) => {
-  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
-    return next();
-  }
-  if (frontendDist && fs.existsSync(path.join(frontendDist, "index.html"))) {
-    return res.sendFile(path.join(frontendDist, "index.html"));
-  }
-  res.status(404).send("API server is running, but static frontend assets were not found.");
-});
+
 
 let isMongoConnected = false;
 
@@ -621,6 +613,18 @@ app.put("/api/orders/:id/status", (req, res) => {
     order.status = status;
   }
   res.json(order);
+});
+
+// ✅ SPA Catch-all & Static Fallback (Express 5 safe middleware)
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  const targetDist = possibleDistPaths.find((p) => fs.existsSync(p));
+  if (targetDist && fs.existsSync(path.join(targetDist, "index.html"))) {
+    return res.sendFile(path.join(targetDist, "index.html"));
+  }
+  res.status(404).send("Foodiee API server is running live.");
 });
 
 // ✅ Start server
