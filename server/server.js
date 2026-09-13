@@ -34,16 +34,31 @@ app.use(cors({
 app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
-const frontendDist = path.join(__dirname, "..", "client", "dist");
-if (fs.existsSync(frontendDist)) {
+const possibleDistPaths = [
+  path.join(__dirname, "..", "client", "dist"),
+  path.join(process.cwd(), "client", "dist"),
+  path.join(__dirname, "dist"),
+  path.join(process.cwd(), "dist")
+];
+
+const frontendDist = possibleDistPaths.find((p) => fs.existsSync(p));
+
+if (frontendDist) {
+  console.log("Serving static frontend from:", frontendDist);
   app.use(express.static(frontendDist));
-  app.get(/^(?!\/api).*/, (req, res, next) => {
-    if (req.path.startsWith("/uploads/")) {
-      return next();
-    }
-    res.sendFile(path.join(frontendDist, "index.html"));
-  });
+} else {
+  console.log("Warning: No static frontend dist folder found.");
 }
+
+app.get("*", (req, res, next) => {
+  if (req.path.startsWith("/api") || req.path.startsWith("/uploads")) {
+    return next();
+  }
+  if (frontendDist && fs.existsSync(path.join(frontendDist, "index.html"))) {
+    return res.sendFile(path.join(frontendDist, "index.html"));
+  }
+  res.status(404).send("API server is running, but static frontend assets were not found.");
+});
 
 let isMongoConnected = false;
 
