@@ -1,7 +1,7 @@
 import React from 'react';
 import RecipeCard from './RecipeCard';
 
-const RecipeList = ({ recipes, onSelect, favorites, toggleFavorite }) => {
+const RecipeList = ({ recipes, onSelect, favorites, toggleFavorite, onAddToCart, cart = [] }) => {
   return (
     <div className="recipe-grid">
       {recipes.map((recipe) => (
@@ -11,6 +11,8 @@ const RecipeList = ({ recipes, onSelect, favorites, toggleFavorite }) => {
           onSelect={onSelect}
           favorites={favorites}
           toggleFavorite={toggleFavorite}
+          onAddToCart={onAddToCart}
+          cartItem={cart.find((c) => c._id === recipe._id)}
         />
       ))}
     </div>

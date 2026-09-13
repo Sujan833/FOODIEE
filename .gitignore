@@ -11,6 +11,10 @@ logs
 # Uploaded files (optional for development)
 uploads/
 
+# Build output
+client/dist/
+dist/
+
 # OS files
 .DS_Store
 Thumbs.db
