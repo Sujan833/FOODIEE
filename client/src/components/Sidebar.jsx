@@ -14,7 +14,7 @@ const Sidebar = ({ isOpen, onClose, onMenuClick, activeTab = 'all', favoritesCou
   return (
     <>
       {isOpen && <div className="sidebar-overlay" onClick={onClose} />}
-      <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+      <aside className={`sidebar ${isOpen ? 'open' : 'closed'}`}>
         <div className="brand-section">
           <div className="brand-header-row">
             <span className="brand-icon">🍳</span>
