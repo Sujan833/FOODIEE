@@ -8,12 +8,8 @@ node_modules/
 logs
 *.log
 
-# Uploaded files (optional for development)
+# Uploaded files
 uploads/
-
-# Build output
-client/dist/
-dist/
 
 # OS files
 .DS_Store
