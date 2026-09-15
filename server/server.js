@@ -35,10 +35,11 @@ app.use(express.json());
 app.use("/uploads", express.static(uploadsDir));
 
 const possibleDistPaths = [
-  path.join(__dirname, "..", "client", "dist"),
-  path.join(process.cwd(), "client", "dist"),
   path.join(__dirname, "dist"),
-  path.join(process.cwd(), "dist")
+  path.join(process.cwd(), "server", "dist"),
+  path.join(process.cwd(), "dist"),
+  path.join(__dirname, "..", "client", "dist"),
+  path.join(process.cwd(), "client", "dist")
 ];
 
 const frontendDist = possibleDistPaths.find((p) => fs.existsSync(p));

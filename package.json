@@ -4,7 +4,7 @@
   "description": "Foodiee - Home Chef Recipe Sharing & Food Ordering Marketplace",
   "main": "server/server.js",
   "scripts": {
-    "build": "cd client && npm install && npm run build",
+    "build": "cd client && npm install && npm run build && cd .. && node -e \"const fs=require('fs'); if(fs.existsSync('client/dist')){fs.cpSync('client/dist','server/dist',{recursive:true});fs.cpSync('client/dist','dist',{recursive:true});}\"",
     "start": "node server/server.js"
   },
   "dependencies": {
