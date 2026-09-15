@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 
 const AddRecipeForm = ({ user, onRecipeAdded, editMode = false, existingRecipe = null, onCancel }) => {
   const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_SERVER_URL) || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '' : 'http://localhost:5000');
@@ -66,14 +65,15 @@ const AddRecipeForm = ({ user, onRecipeAdded, editMode = false, existingRecipe =
     }
 
     try {
-      let res;
-      if (editMode && existingRecipe) {
-        res = await axios.put(`${API_BASE}/api/recipes/${existingRecipe._id}`, data);
-      } else {
-        res = await axios.post(`${API_BASE}/api/recipes`, data);
-      }
+      const url = editMode && existingRecipe
+        ? `${API_BASE}/api/recipes/${existingRecipe._id}`
+        : `${API_BASE}/api/recipes`;
+      const method = editMode && existingRecipe ? 'PUT' : 'POST';
 
-      onRecipeAdded(res.data);
+      const response = await fetch(url, { method, body: data });
+      const result = await response.json();
+
+      onRecipeAdded(result);
       if (!editMode) {
         setFormData({
           title: '',

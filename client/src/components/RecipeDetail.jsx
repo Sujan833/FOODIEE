@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import defaultImage from '../assets/default.jpg';
 import './RecipeDetail.css';
-import axios from 'axios';
 
 const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAddToCart, cartItem }) => {
   const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_SERVER_URL) || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '' : 'http://localhost:5000');
+  const defaultFallback = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
 
   const [editing, setEditing] = useState(false);
   const [edited, setEdited] = useState({ ...recipe });
   const [file, setFile] = useState(null);
-
-  // Current active recipe state (allows live updates when rating)
   const [activeRecipe, setActiveRecipe] = useState(recipe);
 
-  // Rating Form State
   const [userRating, setUserRating] = useState(5);
   const [userComment, setUserComment] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
@@ -37,16 +33,16 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
         formData.append('image', file);
       }
 
-      const res = await axios.put(`${API_BASE}/api/recipes/${activeRecipe._id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await fetch(`${API_BASE}/api/recipes/${activeRecipe._id}`, {
+        method: 'PUT',
+        body: formData
       });
+      const updatedData = await response.json();
 
       setEditing(false);
-      setActiveRecipe(res.data);
+      setActiveRecipe(updatedData);
       if (onEdit) {
-        onEdit(res.data);
+        onEdit(updatedData);
       }
     } catch (err) {
       console.error('Update failed:', err);
@@ -60,7 +56,7 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
       if (onDelete) {
         await onDelete(activeRecipe._id);
       } else {
-        await axios.delete(`${API_BASE}/api/recipes/${activeRecipe._id}`);
+        await fetch(`${API_BASE}/api/recipes/${activeRecipe._id}`, { method: 'DELETE' });
         onBack();
       }
     } catch (err) {
@@ -80,14 +76,19 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
     setRatingMessage('');
 
     try {
-      const res = await axios.post(`${API_BASE}/api/recipes/${activeRecipe._id}/rate`, {
-        userEmail: user.email,
-        userName: user.name,
-        rating: userRating,
-        comment: userComment
+      const response = await fetch(`${API_BASE}/api/recipes/${activeRecipe._id}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userEmail: user.email,
+          userName: user.name,
+          rating: userRating,
+          comment: userComment
+        })
       });
+      const updatedRecipe = await response.json();
 
-      setActiveRecipe(res.data);
+      setActiveRecipe(updatedRecipe);
       setSubmittingRating(false);
       setRatingMessage('⭐ Thank you for rating this dish!');
       setUserComment('');
@@ -100,7 +101,7 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
 
   const imageUrl = activeRecipe.image
     ? (activeRecipe.image.startsWith('http') ? activeRecipe.image : `${API_BASE}/uploads/${activeRecipe.image}`)
-    : defaultImage;
+    : defaultFallback;
 
   const ingredientsList = typeof activeRecipe.ingredients === 'string'
     ? activeRecipe.ingredients.split(',').map((item) => item.trim()).filter(Boolean)
@@ -166,7 +167,7 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
               className="detail-img"
               onError={(e) => {
                 e.target.onerror = null;
-                e.target.src = defaultImage;
+                e.target.src = defaultFallback;
               }}
             />
             <div className="detail-hero-overlay">
@@ -215,7 +216,6 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
               </button>
             </div>
 
-            {/* Rating & Review Submission Box */}
             <div className="rating-review-section">
               <h3>⭐ Rate & Review This Recipe</h3>
               {!user ? (
@@ -261,7 +261,6 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
                 </form>
               )}
 
-              {/* Reviews List */}
               <div className="reviews-list-container">
                 <h4>💬 Customer Reviews ({reviewsList.length})</h4>
                 {reviewsList.length === 0 ? (
@@ -287,7 +286,6 @@ const RecipeDetail = ({ recipe, user, onOpenAuth, onBack, onEdit, onDelete, onAd
               </div>
             </div>
 
-            {/* Owner or Admin Actions */}
             {user && (user.email === activeRecipe.chefEmail || !activeRecipe.chefEmail) && (
               <div className="detail-actions">
                 <button className="btn-edit" onClick={() => setEditing(true)}>

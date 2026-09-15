@@ -14,29 +14,26 @@ function App() {
   const [recipes, setRecipes] = useState([]);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [editMode, setEditMode] = useState(false);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'favorites', 'orders', 'add'
+  const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // User Auth State: NULL by default (Requires Login / Signup)
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('foodiee_user');
     return stored ? JSON.parse(stored) : null;
   });
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
-  // Cart State (Scoped to current session)
   const [cart, setCart] = useState(() => {
     const stored = localStorage.getItem('foodiee_cart');
     return stored ? JSON.parse(stored) : [];
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Modals & Tracker
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [activeTrackedOrder, setActiveTrackedOrder] = useState(null);
 
-  // Favorites State (User-Scoped)
   const [favorites, setFavorites] = useState(() => {
     if (!user) return [];
     const stored = localStorage.getItem(`foodiee_favs_${user.email}`);
@@ -56,10 +53,8 @@ function App() {
 
   useEffect(() => {
     fetchRecipes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Sync user-scoped favorites when user logs in / out
   useEffect(() => {
     if (user && user.email) {
       const stored = localStorage.getItem(`foodiee_favs_${user.email}`);
@@ -69,7 +64,6 @@ function App() {
     }
   }, [user]);
 
-  // Persist user-scoped favorites
   useEffect(() => {
     if (user && user.email) {
       localStorage.setItem(`foodiee_favs_${user.email}`, JSON.stringify(favorites));
@@ -88,7 +82,6 @@ function App() {
     }
   }, [user]);
 
-  // Cart Handlers
   const addToCart = (recipe) => {
     setCart((prevCart) => {
       const existing = prevCart.find((item) => item._id === recipe._id);
@@ -116,7 +109,6 @@ function App() {
     setCart((prev) => prev.filter((item) => item._id !== id));
   };
 
-  // Recipe Handlers
   const handleRecipeAdded = () => {
     fetchRecipes();
     setActiveTab('all');
@@ -132,9 +124,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await fetch(`${API_BASE}/api/recipes/${id}`, {
-        method: 'DELETE',
-      });
+      await fetch(`${API_BASE}/api/recipes/${id}`, { method: 'DELETE' });
       setRecipes((prev) => prev.filter((r) => r._id !== id));
       setSelectedRecipe(null);
       setFavorites((prev) => prev.filter((fid) => fid !== id));
@@ -148,7 +138,6 @@ function App() {
       setIsAuthOpen(true);
       return;
     }
-
     if (favorites.includes(id)) {
       setFavorites(favorites.filter((fid) => fid !== id));
     } else {
@@ -159,17 +148,10 @@ function App() {
   const handleMenuClick = (tab) => {
     setSelectedRecipe(null);
     setEditMode(false);
-
-    if (tab === 'favorites' && !user) {
+    if ((tab === 'favorites' || tab === 'orders') && !user) {
       setIsAuthOpen(true);
       return;
     }
-
-    if (tab === 'orders' && !user) {
-      setIsAuthOpen(true);
-      return;
-    }
-
     setActiveTab(tab);
   };
 
@@ -200,10 +182,8 @@ function App() {
     setSelectedRecipe(null);
   };
 
-  // Unique categories
   const categories = ['All', ...new Set(recipes.map((r) => r.category).filter(Boolean))];
 
-  // Filter recipes
   const displayedRecipes = recipes.filter((r) => {
     const matchesFavorites = activeTab === 'favorites' ? favorites.includes(r._id) : true;
     const matchesCategory =
@@ -223,6 +203,8 @@ function App() {
   return (
     <div className="app-layout">
       <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
         onMenuClick={handleMenuClick}
         activeTab={activeTab}
         favoritesCount={favorites.length}
@@ -233,6 +215,14 @@ function App() {
 
       <main className="content">
         <header className="top-bar">
+          <button
+            className="menu-toggle-btn"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            aria-label="Toggle Navigation Menu"
+          >
+            ☰
+          </button>
+
           <div className="search-box">
             <span className="search-icon">🔍</span>
             <input
@@ -329,16 +319,8 @@ function App() {
             {displayedRecipes.length === 0 ? (
               <div className="empty-state">
                 <span className="empty-icon">🍳</span>
-                <h3>
-                  {activeTab === 'favorites'
-                    ? 'No favorite recipes saved yet'
-                    : 'No recipes match your filter'}
-                </h3>
-                <p>
-                  {activeTab === 'favorites'
-                    ? 'Click the ⭐ star on any dish to save it to your favorites!'
-                    : 'Try clearing your search or add a new delicious recipe!'}
-                </p>
+                <h3>No recipes match your filter</h3>
+                <p>Try clearing your search or adding a new delicious recipe!</p>
                 <button
                   className="btn-primary"
                   onClick={() => {
@@ -364,7 +346,6 @@ function App() {
         )}
       </main>
 
-      {/* Slide-out Cart Drawer */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -374,7 +355,6 @@ function App() {
         onCheckout={handleProceedToCheckout}
       />
 
-      {/* Delivery Checkout Modal */}
       <CheckoutModal
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
@@ -383,13 +363,11 @@ function App() {
         onOrderPlaced={handleOrderPlaced}
       />
 
-      {/* Live Order Tracker Modal */}
       <OrderTrackerModal
         order={activeTrackedOrder}
         onClose={() => setActiveTrackedOrder(null)}
       />
 
-      {/* Auth / Profile Modal */}
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
