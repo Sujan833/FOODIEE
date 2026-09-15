@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const MyOrdersView = ({ user, recipes = [], onOpenAuth, onTrackOrder, onSelectRecipe, onAddNewRecipe }) => {
-  const API_BASE = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_SERVER_URL) || (import.meta && import.meta.env && import.meta.env.VITE_SERVER_URL) || 'http://localhost:5000';
+  const API_BASE = (import.meta && import.meta.env && import.meta.env.VITE_SERVER_URL) || (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? '' : 'http://localhost:5000');
 
   const [activeSubTab, setActiveSubTab] = useState('placed'); // 'placed', 'received', 'my-dishes'
   const [placedOrders, setPlacedOrders] = useState([]);
